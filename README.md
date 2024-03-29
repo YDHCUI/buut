@@ -37,7 +37,7 @@
 
 ### 正向隧道：
 	target执行：./buut -F -l 443
-	vps执行 ：./buut -F -s -s target:443 -p 10086
+	vps执行 ：./buut -F -S -s target:443 -p 10086
   	hacker连接socks5  vps:10086
 
 
