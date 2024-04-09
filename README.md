@@ -17,7 +17,7 @@
     opts.optopt("p", "proxy_port",      "", "代理监听,端口默认10086");
     opts.optopt("m", "transport",       "", "协议类型,默认TCP");//|UDP|WS|ICMP|DNS
     opts.optopt("k", "key",             "", "加密密钥");
-    opts.optopt("n", "channel",         "", "通道数量,默认2");
+    opts.optopt("n", "channel",         "", "通道数量,默认1");
     opts.optopt("c", "config",          "", "配置文件路径");
     opts.optopt("",  "sockspass",       "", "代理密码,默认不验证,用户名buut"); 
     opts.optflagopt("F", "forward",     "", "是否正向模式");
@@ -26,7 +26,7 @@
 
 ## 特点：
 	速度快，使用多路复用技术 将带宽利用到极致。rust开发，速度、稳定性和安全性都有保证。
-	体积小，编译只有不到1.2M, 使用upx后还能更小,相比golang写的程序动辄10多M还是很有优势的。
+	体积小，编译只有不到700K, 使用upx后还能更小,相比golang写的程序动辄10多M还是很有优势的。
 	无特征，程序使用Noise定制加密，可使用动态密钥保证无任何特征。
 	单文件，客户端和服务端使用同样的单文件、多模式自由组合切换。
 	多协议，目前release 0.3只支持tcp，后续把udp和icmp协议支持加进去。
