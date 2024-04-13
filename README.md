@@ -1,7 +1,10 @@
 # BUUT 
 
+https://github.com/YDHCUI/buut
+
 ## 介绍 
 一款使用rust开发的高性能正反向代理隧道工具，基于yamux多路复用技术。
+
 
 ## 工作原理
 ```rust
@@ -35,7 +38,7 @@
 单文件，客户端和服务端使用同样的单文件、多模式自由组合切换。
 
 多协议，目前release 0.4已支持tcp、kcp、websocket，后续把icmp、dns协议支持加进去。
-	
+    
 
 
 ## 使用方法 
@@ -43,31 +46,36 @@
 ### 正向隧道：
 
 ```bash
-	target执行：./buut -F -l 443 
-	vps执行 ：./buut -F -S -s target:443 -p 10086
-  	hacker连接socks5  vps:10086 
+    target执行：./buut -F -l 443 
+    vps执行 ：./buut -F -S -s target:443 -p 10086
+    hacker连接socks5  vps:10086 
 ```
 
 ### 反向隧道
 
 ```bash
-	vps执行：./buut -S -l 443 -p 10086
-	target执行：./buut -s vps:443
-   	hacker连接socks5  vps:10086 
+    vps执行：./buut -S -l 443 -p 10086
+    target执行：./buut -s vps:443
+    hacker连接socks5  vps:10086 
 ```
 
 ### Tips
 
-1、正向隧道时只能使用单通道的tcp或者websocket协议。
+1、设置BUUT变量隐藏vps。 如： 原本的 ./buut -s vps:1234 可改成 export BUUT=vps:1234 && ./buut 
 
-2、设置BUUT变量隐藏vps。 如： 原本的 ./buut -s vps:1234 可改成 export BUUT=vps:1234 && ./buut 
+2、使用websocket协议时,连接地址应设为ws://xxx格式 如: ./buut -m ws -s ws://target:8081/xx
 
-3、使用websocket协议时,连接地址应设为ws://xxx格式 如: ./buut -m ws -s ws://target:8081/service
-
-4、使用kcp协议时,数据不会加密只会压缩。
+3、sockspass是对client端生效，所以设置时应该在client设置，如 ./buut -s 127.0.0.1:443 --sockspass 123456
 
 
 ## 更新 
+
+### 0.4.1
+
+1、修改使KCP协议也使用noise加密。
+
+2、修复正向代理不能使用kcp协议的问题。
+
 
 ### 0.4
 
@@ -95,4 +103,4 @@
 3、加入多级代理支持
 
 4、优化参数体验
-	
+    
