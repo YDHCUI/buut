@@ -96,8 +96,8 @@ https://github.com/YDHCUI/buut
 
 使用websocket连接
 ```bash
-    target执行：       ./buut -F -l 443 
-    vps执行：          ./buut -F -s https://target:443 --headers Cookie:Session=xxxxxx;
+    target执行：       ./buut -F -m ws -l 443 
+    vps执行：          ./buut -F -m ws -s https://target:443 --headers Cookie:Session=xxxxxx;
     hacker连接socks5   vps:10086 
 ```
 
