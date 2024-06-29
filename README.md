@@ -149,13 +149,16 @@ https://github.com/YDHCUI/buut
 
 使用如:  ./buut --noiseparams Noise_KK_25519_ChaChaPoly_BLAKE2s
 
-3、不兼容前面版本 
+3、修改版本长度
+
+4、不兼容前面版本 
 
 
 ### 0.5.0
 
 1、之前NN模式有安全问题，现在更改noiseparams 为 Noise_KK_25519_ChaChaPoly_BLAKE2s 所以可能和以前版本会有不兼容
 
+2、不兼容前面版本
 
 ### 0.4.4
 
