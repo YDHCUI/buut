@@ -2,33 +2,39 @@
 
 https://github.com/YDHCUI/buut
 
+## 提醒
+
+目前项目正处理开发阶段，各自版本的接口可能会不兼容。 请谨慎使用！
+
 ## 介绍 
 一款使用rust开发的高性能正反向隧道代理工具，基于yamux多路复用技术。
 
 
 ## 工作原理
 ```rust
-+------+      +-------------+      +-----------+      +-------------+      +----------+      +------+
-|hacker| <--> | Socks5 VPS  | <--> |Yamux frame| <--> |Noise stream | <--> |TCP stream| <--> |TARGET|
-+------+      +-------------+      +-----------+      +-------------+      +----------+      +------+
++------+      +--------------+      +-----+      +-----------+      +------------+      +----------+      +------+
+|hacker| <--> | Socks5 stream| <--> | VPS | <--> |Yamux frame| <--> |Noise stream| <--> |TCP stream| <--> |TARGET|
++------+      +--------------+      +-----+      +-----------+      +------------+      +----------+      +------+
 ```
 
 ## 参数介绍 
 ```rust
-    opts.optopt("k", "key",             "", "加密密钥");
-    opts.optopt("l", "server_listen",   "", "监听地址");
-    opts.optopt("s", "remote_addr",     "", "远程地址");
-    opts.optopt("f", "forward_addr",    "", "转发地址,暂未实现");
-    opts.optopt("p", "proxy_port",      "", "代理端口,默认10086");
-    opts.optopt("m", "transport",       "", "协议类型,默认TCP,支持<TCP|KCP|WS>");
-    opts.optopt("n", "channel",         "", "通道数量,默认1");
-    opts.optopt("c", "config",          "", "配置文件,默认路径./conf.toml");
-    opts.optflagopt("F", "forward",     "", "是否正向模式");
-    opts.optflagopt("S", "server",      "", "是否服务模式,同时监听tcp和kcp");
-    opts.optflagopt("X", "reuse",       "", "是否端口复用");
-    opts.optopt("",  "sockspass",       "", "代理密码,默认不验证,用户名buut"); 
-    opts.optopt("",  "headers",         "", "连接所需的一些参数");
-    //opts.optopt("",  "log",             "", "日志等级,默认不开"); 
+    opts.optopt("k", "key", "", "加密密钥");
+    opts.optopt("l", "server_listen", "", "监听地址");
+    opts.optopt("s", "remote_addr", "", "远程地址");
+    opts.optopt("f", "forward_addr", "", "转发地址,只对正向代理生效");
+    opts.optopt("p", "proxy_port", "", "代理端口,默认10086");
+    opts.optopt("m", "transport", "", "协议类型,默认TCP,支持<TCP|KCP|WS>");
+    opts.optopt("n", "channel", "", "通道数量,默认1");
+    opts.optopt("c", "config", "", "配置文件,默认路径./conf.toml");
+    opts.optflagopt("F", "forward", "", "是否正向模式");
+    opts.optflagopt("S", "server", "", "是否服务模式,同时监听tcp和kcp");
+    opts.optflagopt("X", "reuse", "", "是否端口复用");
+    opts.optopt("", "sockspass", "", "代理密码,默认不验证,用户名buut");
+    opts.optopt("", "headers",   "", "连接服务所需的一些其它配置如cookie之类的");
+    opts.optopt("",  "noiseparams",   "", "noise加密方式,默认Noise_KK_25519_ChaChaPoly_BLAKE2s");
+    #[cfg(feature = "log")]
+    opts.optopt("",  "log",             "", "日志等级,默认不开");
 ```
 
 ## 特点：
@@ -94,10 +100,10 @@ https://github.com/YDHCUI/buut
     Agent ID [3Yj2LLAg] Proxy Listen [0.0.0.0:10086]
 ```
 
-使用websocket连接
+如果中间有nginx之类的负载设备，tcp没法直接连接，则可以使用websocket连接来穿透
 ```bash
     target执行：       ./buut -F -m ws -l 443 
-    vps执行：          ./buut -F -m ws -s https://target:443/xxx/xxx --headers Cookie:Session=xxxxxx;
+    vps执行：          ./buut -F -m ws -s https://target:443 --headers Cookie:Session=xxxxxx;
     hacker连接socks5   vps:10086 
 ```
 
@@ -120,10 +126,31 @@ https://github.com/YDHCUI/buut
 
 2、使用websocket协议时,连接地址应设为http://xxx格式 如: ./buut -m ws -s http://target:8081/xx
 
-3、sockspass是对client端生效，所以设置时应该在client设置，如 ./buut -s 127.0.0.1:443 --sockspass 123456
+3、sockspass是每个agent端单独设置，所以应该在agent端设置，如 ./buut -s 127.0.0.1:443 --sockspass 123456
 
 
 ## 更新 
+
+### 0.6.0
+
+1、实现forward_addr功能， 将非buut流量转发到指定地址。 考虑到流量特征等原因该功能只对正向代理生效。
+
+使用如:  ./buut -F -l 1234 -f 127.0.0.1:8080  
+
+在不影响 buut 代理的使用的情况下 浏览器访问 127.0.0.1:1234 会返回 127.0.0.1:8080 的内容。 
+
+2、不兼容前面版本
+
+### 0.5.1
+
+1、修改支持nginx默认配置下的websocket穿透
+
+2、通过noiseparams参数自定义noise加密方式,默认为 Noise_KK_25519_ChaChaPoly_BLAKE2s 
+
+使用如:  ./buut --noiseparams Noise_KK_25519_ChaChaPoly_BLAKE2s
+
+3、不兼容前面版本 
+
 
 ### 0.5.0
 
@@ -150,11 +177,11 @@ https://github.com/YDHCUI/buut
 
 1、简单实现端口复用
 
+通过调用 SO_REUSEADDR 实现端口复用 使用如: ./buut -F -X -l 192.168.1.110:443  
+
 2、去除默认参数，优化使用
 
 3、修复握手包超时的的bug。
-
-通过调用 SO_REUSEADDR 实现端口复用 使用如: ./buut -F -X -l 192.168.1.110:443  
 
 
 ### 0.4.1
@@ -191,7 +218,4 @@ https://github.com/YDHCUI/buut
 3、端口映射模式
 
 4、加入tun模式 
-
-5、将非buut流量转发到外部端口（急）
-
 
