@@ -222,3 +222,9 @@ https://github.com/YDHCUI/buut
 
 4、加入tun模式 
 
+
+## 交流 
+加 V 
+![a8e5625b211ad3b3c435e9403ebae9f](https://github.com/YDHCUI/buut/assets/46884495/6c667bb1-7eae-464f-afbd-3f0d67cbcbcb)
+
+
