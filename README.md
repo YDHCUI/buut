@@ -124,9 +124,8 @@ https://github.com/YDHCUI/buut
 
 1、设置BUUT变量隐藏vps。 如： 原本的 ./buut -s vps:1234 可改成 export BUUT=vps:1234 && ./buut 
 
-2、使用websocket协议时,连接地址应设为http://xxx格式 如: ./buut -m ws -s http://target:8081/xx
+2、sockspass是每个agent端单独设置，所以应该在agent端设置，如 ./buut -s 127.0.0.1:443 --sockspass 123456
 
-3、sockspass是每个agent端单独设置，所以应该在agent端设置，如 ./buut -s 127.0.0.1:443 --sockspass 123456
 
 
 ## 更新 
