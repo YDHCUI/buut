@@ -19,19 +19,19 @@ https://github.com/YDHCUI/buut
 
 ## 参数介绍 
 ```rust
-    opts.optopt("k", "key", "", "加密密钥");
-    opts.optopt("l", "server_listen", "", "监听地址");
-    opts.optopt("s", "remote_addr", "", "远程地址");
-    opts.optopt("f", "forward_addr", "", "转发地址,只对正向代理生效");
-    opts.optopt("p", "proxy_port", "", "代理端口,默认10086");
-    opts.optopt("m", "transport", "", "协议类型,默认TCP,支持<TCP|KCP|WS>");
+    opts.optopt("k", "key", "", "加密密钥，如果正向连接的特征被拦截 可以修改该参数");
+    opts.optopt("l", "server_listen", "", "监听地址，支持port、socketaddr");
+    opts.optopt("s", "remote_addr", "", "远程地址，支持socketaddr、url 等形式");
+    opts.optopt("f", "forward_addr", "", "转发地址,只对正向代理生效，识别到非buut流量则转发到对应地址。");
+    opts.optopt("p", "proxy_port", "", "代理端口,默认10086，每次增1");
+    opts.optopt("m", "transport", "", "协议类型,默认TCP,支持<TCP|KCP>");
     opts.optopt("n", "channel", "", "通道数量,默认1");
-    opts.optopt("c", "config", "", "配置文件,默认路径./conf.toml");
+    opts.optopt("c", "config", "", "配置文件,未实现");
     opts.optflagopt("F", "forward", "", "是否正向模式");
     opts.optflagopt("S", "server", "", "是否服务模式,同时监听tcp和kcp");
     opts.optflagopt("X", "reuse", "", "是否端口复用");
     opts.optopt("", "sockspass", "", "代理密码,默认不验证,用户名buut");
-    opts.optopt("", "headers",   "", "连接服务所需的一些其它配置如cookie之类的");
+    opts.optopt("", "headers",   "", "连接服务所需的一些其它配置如cookie之类的，使用\r\n换行");
     opts.optopt("",  "noiseparams",   "", "noise加密方式,默认Noise_KK_25519_ChaChaPoly_BLAKE2s");
     #[cfg(feature = "log")]
     opts.optopt("",  "log",             "", "日志等级,默认不开");
@@ -47,7 +47,7 @@ https://github.com/YDHCUI/buut
 
 单文件，客户端和服务端使用同样的单文件、多模式自由组合切换。
 
-多协议，目前release 0.4已支持tcp、kcp、websocket，后续把icmp、dns协议支持加进去。
+多协议，目前release 0.7已支持tcp、kcp，后续把icmp、dns协议支持加进去。
 
 
 
@@ -100,10 +100,10 @@ https://github.com/YDHCUI/buut
     Agent ID [3Yj2LLAg] Proxy Listen [0.0.0.0:10086]
 ```
 
-如果中间有nginx之类的负载设备，tcp没法直接连接，则可以使用websocket连接来穿透
+如果服务需要登录才能访问 则使用headers参数设置cookie等请求头。
 ```bash
-    target执行：       ./buut -F -m ws -l 443 
-    vps执行：          ./buut -F -m ws -s https://target:443 --headers Cookie:Session=xxxxxx;
+    target执行：       ./buut -F -l 1234
+    vps执行：          ./buut -F -s https://target:1234/xx --headers Cookie:Session=xxxxxx;
     hacker连接socks5   vps:10086 
 ```
 
@@ -131,6 +131,25 @@ https://github.com/YDHCUI/buut
 
 ## 更新 
 
+### 0.7.1
+
+1、 仔细研究了下nginx 发现其实只要包含Connection: Upgrade的头 tcp也是能正常穿透的。 
+所以整体重构了下 正向直接伪装websocket头 建立连接后使用tcp传输。
+
+2、解决空连接超时的ddos安全问题，提高性能，正向代理情况下使用-f参数不会影响到原有业务运行。
+
+3、修改忽略服务端证书校验，以适应老旧网站。
+
+4、使用so_reuseport优化端口复用，只支持unix。
+
+
+### 0.6.1
+
+1、修复随机数不随机的安全问题。 不兼容前面版本。
+
+2、去除流量特征。
+
+
 ### 0.6.0
 
 1、实现forward_addr功能， 将非buut流量转发到指定地址。 考虑到流量特征等原因该功能只对正向代理生效。
@@ -149,9 +168,7 @@ https://github.com/YDHCUI/buut
 
 使用如:  ./buut --noiseparams Noise_KK_25519_ChaChaPoly_BLAKE2s
 
-3、修改版本长度
-
-4、不兼容前面版本 
+3、修改版本长度。 所以不兼容前面版本 
 
 
 ### 0.5.0
@@ -222,9 +239,13 @@ https://github.com/YDHCUI/buut
 
 4、加入tun模式 
 
+5、重构！！！
+
 
 ## 交流 
-加 V 
+
+加V 
+
 ![a8e5625b211ad3b3c435e9403ebae9f](https://github.com/YDHCUI/buut/assets/46884495/6c667bb1-7eae-464f-afbd-3f0d67cbcbcb)
 
 
