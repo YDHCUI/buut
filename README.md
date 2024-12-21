@@ -2,10 +2,6 @@
 
 https://github.com/YDHCUI/buut
 
-## 提醒
-
-目前项目正处理开发阶段，各自版本的接口可能会不兼容。 请谨慎使用！
-
 ## 介绍 
 一款使用rust开发的高性能正反向隧道代理工具，基于yamux多路复用技术。
 
@@ -19,22 +15,23 @@ https://github.com/YDHCUI/buut
 
 ## 参数介绍 
 ```rust
-    opts.optopt("k", "key", "", "加密密钥，如果正向连接的特征被拦截 可以修改该参数");
-    opts.optopt("l", "server_listen", "", "监听地址，支持port、socketaddr");
-    opts.optopt("s", "remote_addr", "", "远程地址，支持socketaddr、url 等形式");
-    opts.optopt("f", "forward_addr", "", "转发地址,只对正向代理生效，识别到非buut流量则转发到对应地址。");
-    opts.optopt("p", "proxy_port", "", "代理端口,默认10086，每次增1");
-    opts.optopt("m", "transport", "", "协议类型,默认TCP,支持<TCP|KCP>");
-    opts.optopt("n", "channel", "", "通道数量,默认1");
-    opts.optopt("c", "config", "", "配置文件,未实现");
-    opts.optflagopt("F", "forward", "", "是否正向模式");
-    opts.optflagopt("S", "server", "", "是否服务模式,同时监听tcp和kcp");
-    opts.optflagopt("X", "reuse", "", "是否端口复用");
-    opts.optopt("", "sockspass", "", "代理密码,默认不验证,用户名buut");
-    opts.optopt("", "headers",   "", "连接服务所需的一些其它配置如cookie之类的，使用\r\n换行");
-    opts.optopt("",  "noiseparams",   "", "noise加密方式,默认Noise_KK_25519_ChaChaPoly_BLAKE2s");
-    #[cfg(feature = "log")]
-    opts.optopt("",  "log",             "", "日志等级,默认不开");
+    opts.optopt("k", "key",             "", "加密密钥");
+    opts.optopt("l", "server_listen",   "", "监听地址");
+    opts.optopt("s", "remote_addr",     "", "远程地址");
+    opts.optopt("f", "forward_addr",    "", "转发地址,只支持正向");
+    opts.optopt("p", "proxy_port",      "", "代理端口,默认10086");
+    opts.optopt("m", "transport",       "", "协议类型,默认TCP,支持<TCP|KCP>");
+    opts.optopt("c", "config",          "", "配置文件,默认路径./conf.toml");
+    opts.optopt("n", "name",            "", "客户端id");
+    opts.optopt("", "channel",          "", "通道数量,默认1");
+    opts.optopt("", "sockspass",        "", "代理密码,默认buut/buut");
+    opts.optopt("", "headers",          "", "连接配置,连接服务所需的一些其它配置如cookie之类的");
+    opts.optopt("", "noiseparams",      "", "加密方式,noise默认Noise_KK_25519_ChaChaPoly_BLAKE2s");
+    opts.optflagopt("F", "forward",     "", "是否正向模式");
+    opts.optflagopt("S", "service",     "", "是否服务模式");
+    opts.optflagopt("X", "soreuse",     "", "是否端口复用");
+    opts.optflagopt("O", "origins",     "", "是否流量加密");
+    opts.optflagopt("Z", "compres",     "", "是否流量压缩"); 
 ```
 
 ## 特点：
@@ -129,6 +126,17 @@ https://github.com/YDHCUI/buut
 
 
 ## 更新 
+
+### 1.0.1
+
+1、支持自定义id。
+
+3、支持headers覆写。
+
+4、稳定版本，以后api保持不变，不兼容之前版本。
+
+5、支持多平台，其它优化。
+
 
 ### 0.7.1
 
