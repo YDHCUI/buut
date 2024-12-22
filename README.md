@@ -119,7 +119,7 @@ https://github.com/YDHCUI/buut
 
 ### Tips
 
-1、设置BUUT变量隐藏vps。 如： 原本的 ./buut -s vps:1234 可改成 export BUUT=vps:1234 && ./buut 
+1、设置BUUT变量隐藏vps。 如： 原本的 ./buut -s vps:1234 可改成 export BUUT=vps:1234 && ./buut -s 1
 
 2、sockspass是每个agent端单独设置，所以应该在agent端设置，如 ./buut -s 127.0.0.1:443 --sockspass 123456
 
