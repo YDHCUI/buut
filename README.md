@@ -31,7 +31,11 @@ https://github.com/YDHCUI/buut
     opts.optflagopt("S", "service",     "", "是否服务模式");
     opts.optflagopt("X", "soreuse",     "", "是否端口复用");
     opts.optflagopt("O", "origins",     "", "是否流量加密");
-    opts.optflagopt("Z", "compres",     "", "是否流量压缩"); 
+    opts.optflagopt("Z", "compres",     "", "是否流量压缩");
+
+    #[cfg(feature = "log")]
+    opts.optopt("",  "log",             "", "日志等级,默认不开");
+
 ```
 
 ## 特点：
@@ -123,6 +127,7 @@ https://github.com/YDHCUI/buut
 
 2、sockspass是每个agent端单独设置，所以应该在agent端设置，如 ./buut -s 127.0.0.1:443 --sockspass 123456
 
+3、 使用带log的版本进行调试。 ./buut -l 1234 --log info 
 
 ## todo
 
