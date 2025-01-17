@@ -291,6 +291,93 @@ fn main() {
 }
 
 
+async fn run_once<T: Transport + Clone + 'static>(
+    config: BuutConfig,
+    mut reverse: Reverse<T>,
+    mut forward: Forward<T>,
+) {
+    if config.hidewin.unwrap_or_default() { //隐藏cmd窗口
+        #[cfg(windows)]
+        utils::hide_console();
+    }
+    if config.server_listen.is_some() {
+        if config.forward.unwrap_or_default() {
+            if let Err(e) = forward.agent().await {
+                println!("{:?}", e);
+            };
+        }else{
+            if let Err(e) = reverse.server().await {
+                println!("{:?}", e);
+            };
+        }
+    };
+    if config.remote_addr.is_some() {
+        if config.forward.unwrap_or_default() {
+            if let Err(e) = forward.server().await {
+                println!("{:?}", e);
+            };
+        }else{
+            if let Err(e) = reverse.agent().await {
+                println!("{:?}", e);
+            };
+        }
+    };
+}
+
+async fn run_server(mut config: BuutConfig) {
+    let mut handles = Vec::new();
+    let mut config1 = config.clone();
+    handles.push(tokio::spawn(async move {
+        config1.transport = TransportType::TCP;
+        let forward: Forward<TcpTransport> = Forward::new(config1.clone());
+        let reverse: Reverse<TcpTransport> = Reverse::new(config1.clone());
+        run_once(config1, reverse, forward).await;
+    }));
+    #[cfg(feature = "kcp")]
+    handles.push(tokio::spawn(async move {
+        config.transport = TransportType::KCP;
+        let forward: Forward<KcpTransport> = Forward::new(config.clone());
+        let reverse: Reverse<KcpTransport> = Reverse::new(config.clone());
+        run_once(config, reverse, forward).await;
+    }));
+    futures::future::join_all(handles).await;
+}
+
+async fn run_transport(config: BuutConfig) {
+    match config.transport {
+        TransportType::TCP => {
+            let forward: Forward<TcpTransport> = Forward::new(config.clone());
+            let reverse: Reverse<TcpTransport> = Reverse::new(config.clone());
+            run_once(config, reverse, forward).await;
+        }
+        #[cfg(feature = "kcp")]
+        TransportType::KCP => {
+            let forward: Forward<KcpTransport> = Forward::new(config.clone());
+            let reverse: Reverse<KcpTransport> = Reverse::new(config.clone());
+            run_once(config, reverse, forward).await;
+        }
+        #[cfg(feature = "ws")]
+        TransportType::WS => {
+            let forward: Forward<WebsocketTransport> = Forward::new(config.clone());
+            let reverse: Reverse<WebsocketTransport> = Reverse::new(config.clone());
+            run_once(config, reverse, forward).await;
+        }
+    }
+}
+
+pub async fn run_main(config: BuutConfig){
+    if config.service.unwrap_or_default() {
+        if config.forward.unwrap_or_default() {
+            let mut forward: Forward<TcpTransport> = Forward::new(config.clone());
+            if let Err(e) = forward.socks5server().await {
+                println!("{:?}", e);
+            }
+        }
+        run_server(config.clone()).await;
+    }
+    run_transport(config).await;
+}
+
 
 /*
 todo
