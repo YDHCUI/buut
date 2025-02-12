@@ -6,9 +6,13 @@
 ### 1.2.1
 
 1、加入端口映射模式 。
-	使用,如将target的80端口映射到vps:81
+
+使用,如将target的80端口映射到vps:81
+ 
 	target端设置 buut -s vps:1234 -p 81:80   
-	或vps端设置  buut -l 1234 -p 81:80   	
+ 
+	或vps端设置  buut -l 1234 -p 81:80  
+ 
 	正向时设置   buut -F -s target:443 -p 81:80  
 
 2、 其它优化
