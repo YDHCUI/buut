@@ -20,7 +20,7 @@ https://github.com/YDHCUI/buut
     opts.optopt("l", "listen_addr",     "", "监听地址");
     opts.optopt("s", "remote_addr",     "", "远程地址");
     opts.optopt("f", "forward_addr",    "", "转发地址,只支持正向");
-    opts.optopt("p", "proxy_port",      "", "代理端口,默认10086 或得端口转发模式:本地端口:目标端口,如80:81");
+    opts.optopt("p", "proxy_port",      "", "代理端口,默认10086 或者端口转发模式:本地端口:目标端口,如80:81");
     opts.optopt("m", "transport",       "", "协议类型,默认TCP,支持<TCP|KCP>");
     opts.optopt("c", "config",          "", "配置文件,默认路径./conf.toml");
     opts.optopt("n", "name",            "", "客户端id");
