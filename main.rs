@@ -21,17 +21,17 @@ use serde::Deserializer;
 use std::net::SocketAddr;
 
 pub const BUUT_VERSION: &str = "buut-01.02.01";
-
-pub const MAX_BUFFER_SIZE: usize = 10240;
+pub const HANDSHAKE_TIMEOUT: u64 = 5; // Timeout for transport handshake
+pub const MAX_HEADERS_SIZE: usize = 10240; // read headers max bufsize
 
 // 这个结构体不能修改 否则会造成版本不兼容 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SynConfig {
     pub version: String,
-    pub name: String,
-    pub pass: Option<String>,
-    pub ip: String,
-    pub port: u16,
+    pub name:    String,
+    pub host:    String,
+    pub pass:    Option<String>,
+    pub port:    Option<ProxyPort>,
 }
 
 impl Default for SynConfig {
@@ -39,10 +39,31 @@ impl Default for SynConfig {
     -> SynConfig {
         SynConfig{
             version: BUUT_VERSION.into(),
-            name: "".into(),
-            pass: None,
-            ip: "".into(),
-            port: 0, 
+            name:    String::from(""),
+            host:    String::from(""),
+            pass:    None,
+            port:    None, 
+        }
+    }
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ProxyPort{
+    Socks5(u16),
+    Mapping((u16,u16))
+}
+
+impl From<String> for ProxyPort {
+    fn from(s: String) 
+    -> ProxyPort {
+        if let Some((sport,aport)) = s.split_once(":") { 
+            ProxyPort::Mapping((
+                sport.parse::<u16>().unwrap(),
+                aport.parse::<u16>().unwrap()
+            ))
+        }else{
+            ProxyPort::Socks5(s.parse::<u16>().unwrap())
         }
     }
 }
@@ -51,10 +72,10 @@ impl Default for SynConfig {
 pub struct BuutConfig {
     pub config:         Option<String>, 
     pub remote_addr:    Option<BuutAddr>,
-    pub server_listen:  Option<SocketAddr>,
+    pub listen_addr:    Option<SocketAddr>,
     pub forward_addr:   Option<SocketAddr>,
-    pub proxy_port:     Option<u16>,
-    pub transport:      TransportType,
+    pub proxy_port:     Option<ProxyPort>,
+    pub transport:      Option<TransportType>,
     pub key:            Option<String>,
     pub name:           Option<String>,
     pub channel:        Option<usize>,
@@ -66,7 +87,7 @@ pub struct BuutConfig {
     pub soreuse:        Option<bool>,
     pub origins:        Option<bool>,
     pub compres:        Option<bool>,
-    pub hidewin:        Option<bool>,
+    pub hidecmd:        Option<bool>,
 }
 
 impl Default for BuutConfig {
@@ -75,10 +96,10 @@ impl Default for BuutConfig {
         BuutConfig{
             config:         None,
             remote_addr:    None,
-            server_listen:  None,
+            listen_addr:    None,
             forward_addr:   None,
-            proxy_port:     Some(10086),
-            transport:      TransportType::from(String::from("tcp")),
+            proxy_port:     Some(ProxyPort::Socks5(10086)),
+            transport:      Some(TransportType::from(String::from("tcp"))),
             key:            Some(String::from("0xffff")),
             name:           Some(utils::get_rnd(8)),
             channel:        Some(1),
@@ -90,7 +111,7 @@ impl Default for BuutConfig {
             soreuse:        Some(false),
             origins:        Some(false),
             compres:        Some(false),
-            hidewin:        Some(false),
+            hidecmd:        Some(false),
         }
     }
 }
@@ -109,7 +130,7 @@ impl BuutAddr{
 
     pub fn host_str(&self) 
     -> &str {
-        let host_str = self.0.host_str().expect("地址错误 类似: http://127.0.0.1:80/xx ");
+        let host_str = self.0.host_str().unwrap(); // 调用的地方都是客户端 暂时没大问题
         host_str
     }
 
@@ -177,31 +198,31 @@ pub fn parse(matches: Matches)
         };
     }; 
 
-    if let Some(s) = matches.opt_str("server_listen") {
+    if let Some(s) = matches.opt_str("listen_addr") {
         let x = if let Ok(a) = s.parse::<u16>() {
             format!("0.0.0.0:{}", a)
         } else {
             s
         };
-        config.server_listen = Some(utils::to_addr(x)?);
+        config.listen_addr = Some(utils::to_addr(x)?);
     };
 
     if let Some(s) = matches.opt_str("forward_addr") {
         config.forward_addr = Some(utils::to_addr(s)?);
     };
 
-    if let Some(s) = matches.opt_str("proxy_port") {
-        config.proxy_port = Some(s.parse::<u16>()?);
-    };
-
-    if let Some(s) = matches.opt_str("transport") {
-        config.transport = TransportType::from(s.to_lowercase());
-    };
-    
     if let Some(s) = matches.opt_str("channel") {
         config.channel = Some(s.parse::<usize>()?);
     };
 
+    if let Some(s) = matches.opt_str("proxy_port") {
+        config.proxy_port = Some(ProxyPort::from(s));
+    };
+
+    if let Some(s) = matches.opt_str("transport") {
+        config.transport = Some(TransportType::from(s.to_lowercase()));
+    };
+    
     if let Some(s) = matches.opt_str("key"){
         config.key = Some(s);
     };
@@ -231,18 +252,20 @@ pub fn parse(matches: Matches)
     config.soreuse = Some(matches.opt_present("soreuse"));
     config.origins = Some(matches.opt_present("origins"));
     config.compres = Some(matches.opt_present("compres"));
-    config.hidewin = Some(matches.opt_present("hidewin"));
+    config.hidecmd = Some(matches.opt_present("hidecmd"));
+
     Ok(config)
 }
+
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
     let mut opts = getopts::Options::new();
     opts.optopt("k", "key",             "", "          加密密钥");
-    opts.optopt("l", "server_listen",   "", "监听地址");
+    opts.optopt("l", "listen_addr",     "", "  监听地址");
     opts.optopt("s", "remote_addr",     "", "  远程地址");
     opts.optopt("f", "forward_addr",    "", " 转发地址,只支持正向");
-    opts.optopt("p", "proxy_port",      "", "   代理端口,默认10086");
+    opts.optopt("p", "proxy_port",      "", "   代理端口,默认10086 或得端口转发模式:本地端口:目标端口,如80:81");
     opts.optopt("m", "transport",       "", "    协议类型,默认TCP,支持<TCP|KCP>");
     opts.optopt("c", "config",          "", "       配置文件");
     opts.optopt("n", "name",            "", "         客户端id");
@@ -253,14 +276,12 @@ fn main() {
     opts.optflagopt("F", "forward",     "", "是否正向模式");
     opts.optflagopt("S", "service",     "", "是否服务模式");
     opts.optflagopt("X", "soreuse",     "", "是否端口复用");
-    opts.optflagopt("O", "origins",     "", "是否流量加密");
+    opts.optflagopt("O", "origins",     "", "是否流量加密,默认启用");
     opts.optflagopt("Z", "compres",     "", "是否流量压缩"); 
-    opts.optflagopt("H", "hidewin",     "", "是否隐藏窗口"); // 只对windows生效    
-
+    opts.optflagopt("H", "hidecmd",     "", "是否隐藏窗口"); // 只对windows生效    
     //opts.optopt("",  "p2p",             "", "P2P模式,未实现");
     #[cfg(feature = "log")]
-    opts.optopt("",  "log",             "", "日志等级,默认不开");
-    
+    opts.optopt("",  "log",             "", "日志等级,默认不开"); 
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
