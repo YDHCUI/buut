@@ -2,6 +2,7 @@
 
 https://github.com/YDHCUI/buut
 
+
 ## 介绍 
 一款使用rust开发的高性能正反向隧道代理工具，基于yamux多路复用技术。
 
@@ -9,17 +10,17 @@ https://github.com/YDHCUI/buut
 ## 工作原理
 ```rust
 +------+      +--------------+      +-----+      +-----------+      +------------+      +----------+      +------+
-|hacker| <--> | Socks5 stream| <--> | VPS | <--> |Yamux frame| <--> |Noise stream| <--> |TCP stream| <--> |TARGET|
+|Hacker| <--> | Socks5 stream| <--> | VPS | <--> |Yamux frame| <--> |Noise stream| <--> |TCP stream| <--> |Target|
 +------+      +--------------+      +-----+      +-----------+      +------------+      +----------+      +------+
 ```
 
 ## 参数介绍 
 ```rust
     opts.optopt("k", "key",             "", "加密密钥");
-    opts.optopt("l", "server_listen",   "", "监听地址");
+    opts.optopt("l", "listen_addr",     "", "监听地址");
     opts.optopt("s", "remote_addr",     "", "远程地址");
     opts.optopt("f", "forward_addr",    "", "转发地址,只支持正向");
-    opts.optopt("p", "proxy_port",      "", "代理端口,默认10086");
+    opts.optopt("p", "proxy_port",      "", "代理端口,默认10086 或得端口转发模式:本地端口:目标端口,如80:81");
     opts.optopt("m", "transport",       "", "协议类型,默认TCP,支持<TCP|KCP>");
     opts.optopt("c", "config",          "", "配置文件,默认路径./conf.toml");
     opts.optopt("n", "name",            "", "客户端id");
@@ -31,16 +32,12 @@ https://github.com/YDHCUI/buut
     opts.optflagopt("S", "service",     "", "是否服务模式");
     opts.optflagopt("X", "soreuse",     "", "是否端口复用");
     opts.optflagopt("O", "origins",     "", "是否流量加密");
-    opts.optflagopt("Z", "compres",     "", "是否流量压缩");
-
-    #[cfg(feature = "log")]
-    opts.optopt("",  "log",             "", "日志等级,默认不开");
-
+    opts.optflagopt("Z", "compres",     "", "是否流量压缩"); 
 ```
 
 ## 特点：
 
-速度快，使用多路复用技术 将带宽利用到极致。rust开发，速度、稳定性和安全性都有保证。
+速度快，使用多路复用技术 rust开发，速度、稳定性和安全性都有保证。
 
 体积小，编译打包后只有不到几百k, 相比golang写的程序动辄10多M还是很有优势的。
 
@@ -48,7 +45,7 @@ https://github.com/YDHCUI/buut
 
 单文件，客户端和服务端使用同样的单文件、多模式自由组合切换。
 
-多协议，目前release 0.7已支持tcp、kcp，后续把icmp、dns协议支持加进去。
+多协议，目前已支持tcp、kcp，后续把icmp、dns协议支持加进去。
 
 
 
@@ -120,14 +117,33 @@ https://github.com/YDHCUI/buut
 
 ```
 
+### 端口映射
+
+```bash
+    vps执行：          ./buut -l 443
+    target执行         ./buut -s vps:443 -p 81:80  
+
+    vps:
+    [root@localhost]# ./buut -l 443
+    Reverse Server Listen [tcp://0.0.0.0:443]
+    Agent ID [rmSyYaLX] Port Mapping On [0.0.0.0:81 <-> 192.168.1.21:80]
+
+    target:
+    [root@localhost]# ./buut -s 127.0.0.1:443 -p 81:80 
+    Reverse Agent ID [rmSyYaLX] Channel [1] Connect Suss
+
+```
+
 
 ### Tips
 
 1、设置BUUT变量隐藏vps。 如： 原本的 ./buut -s vps:1234 可改成 export BUUT=vps:1234 && ./buut -s 1
 
-2、sockspass是每个agent端单独设置，所以应该在agent端设置，如 ./buut -s 127.0.0.1:443 --sockspass 123456
+2、buut默认启用密码校验，默认用户名密码buut:buut 。
 
-3、 使用带log的版本进行调试。 ./buut -l 1234 --log info 
+3、如果需要修改sockspass则需要为每个agent端单独设置，如 ./buut -s 127.0.0.1:443 --sockspass 123456
+
+4、 使用带log的版本进行调试。 ./buut -l 1234 --log info 
 
 ## todo
 
@@ -135,7 +151,7 @@ https://github.com/YDHCUI/buut
 
 2、链式代理支持
 
-3、端口映射模式
+3、端口映射模式 -- 已完成
 
 4、加入tun模式 
 
