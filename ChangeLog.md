@@ -45,6 +45,15 @@ key = "0xffff"
 
 ```
 
+或者启用端口映射服务
+```toml
+transport = "TCP"
+listen_addr = "0.0.0.0:2222"
+
+[proxy_port]
+Mapping = [8080, 8081]
+```
+
 然后直接./buut -c conf.toml 启动就行
 
 
