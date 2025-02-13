@@ -26,22 +26,26 @@
 
 3、加入窗口隐藏选项。（仅windows）
 
-4、支持配置文件，
-	使用方法,将需要的命令行参数全名写成toml就行 一行一个参数 。
+4、支持配置文件，使用方法,将需要的命令行参数全名写成toml就行 一行一个参数 。
 	
-	比如简单的服务端配置，
+比如简单的服务端配置，
+```toml
+transport = "TCP"
+listen_addr = "0.0.0.0:2222"
 
-	```toml
-	listen_addr = "0.0.0.0:443"
-	proxy_port = "10086"
-	```
+[proxy_port]
+Socks5 = 10086
+```
 
-	客户端配置
-	```toml
-	remote_addr = "192.168.93.217:443"
-	```
+客户端配置
+```toml
+transport = "TCP"
+remote_addr = "127.0.0.1:2222"
+key = "0xffff"
 
-	然后直接./buut -c conf.toml 启动就行
+```
+
+然后直接./buut -c conf.toml 启动就行
 
 
 ### 1.0.3
