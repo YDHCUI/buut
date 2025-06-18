@@ -20,14 +20,15 @@ https://github.com/YDHCUI/buut
     opts.optopt("l", "listen_addr",     "", "监听地址");
     opts.optopt("s", "remote_addr",     "", "远程地址");
     opts.optopt("f", "forward_addr",    "", "转发地址,只支持正向");
-    opts.optopt("p", "proxy_port",      "", "代理端口,默认10086 或者端口映射模式:本地端口:目标端口,如80:81");
+    opts.optopt("p", "proxy_port",      "", "代理端口,默认10086 或得端口转发模式,本地端口:目标端口,如80:81");
     opts.optopt("m", "transport",       "", "协议类型,默认TCP,支持<TCP|KCP>");
     opts.optopt("c", "config",          "", "配置文件,默认路径./conf.toml");
     opts.optopt("n", "name",            "", "客户端id");
     opts.optopt("", "channel",          "", "通道数量,默认1");
-    opts.optopt("", "sockspass",        "", "代理密码,默认buut/buut");
     opts.optopt("", "headers",          "", "连接配置,连接服务所需的一些其它配置如cookie之类的");
+    opts.optopt("", "sockspass",        "", "代理密码,默认buut/buut");
     opts.optopt("", "noiseparams",      "", "加密方式,noise默认Noise_KK_25519_ChaChaPoly_BLAKE2s");
+    opts.optopt("", "srcip",            "", "来源IP,端口复用时使用");
     opts.optflagopt("F", "forward",     "", "是否正向模式");
     opts.optflagopt("S", "service",     "", "是否服务模式");
     opts.optflagopt("X", "soreuse",     "", "是否端口复用");
@@ -105,6 +106,7 @@ https://github.com/YDHCUI/buut
     hacker连接socks5   vps:10086 
 ```
 
+
 ### 自建代理
 
 ```bash
@@ -134,7 +136,6 @@ https://github.com/YDHCUI/buut
 
 ```
 
-
 ### Tips
 
 1、设置BUUT变量隐藏vps。 如： 原本的 ./buut -s vps:1234 可改成 export BUUT=vps:1234 && ./buut -s 1
@@ -145,19 +146,54 @@ https://github.com/YDHCUI/buut
 
 4、 使用带log的版本进行调试。 ./buut -l 1234 --log info 
 
-## todo
 
-1、实现icmp、dns协议支持  
+## 端口复用
 
-2、链式代理支持
+1、假设现在有一个web服务运行在8080端口，正常情况下直接监听8080是会报如下错误
+    
+```bash 
+    buut.exe -F -l 8080
+    通常每个套接字地址(协议/网络地址/端口)只允许使用一次。 (os error 10048)
+```
+2、现在使用 -X 参数设置SO_REUSEADDR则可以成功监听  
+```bash 
+    buut.exe -X -F -l 8080
+    Agent Forward ID [SCrLfzxa] Listen On [tcp://0.0.0.0:8080]
 
-3、端口映射模式 -- 已完成
+```
+3、使用SO_REUSEADDR能成功的前提是原服务也启用了SO_REUSEADDR。如果原服务没有启用SO_REUSEADDR则不能成功。这时候可以使用 --srcip参数设置源IP 通过转发来实现端口复用。
+```bash 
+    [root@localhost buut]# ./buut -X -F -l 32001
+    Address already in use (os error 98)
 
-4、加入tun模式 
+    [root@localhost buut]# ./buut -X -F -l 32001 --srcip 192.168.2.122
+    Rule src:192.168.2.122 port:32001 redirect:32002 applied Succ!
+    Agent Forward ID [EJ1TROJd] Listen On [tcp://0.0.0.0:32002]
+    Rule src:192.168.2.122 port:32001 redirect:32002 Delete Succ!
 
-5、重构！！！
+```
+4、客户端正常连接web端口就行
+```bash 
+    [root@localhost buut]# ./buut -F -s 123.151.152.153:32001
+    GET / HTTP/1.1
+    Upgrade: websocket
+    Origin: http://123.151.152.153:32001/
+    Sec-WebSocket-Version: 13
+    Connection: Upgrade
+    Sec-WebSocket-Key: ogq+DC9z2RVSsf86PpMizw==
+    Host: 123.151.152.153:32001
 
 
+    HTTP/1.1 101 Switching Protocols
+    Sec-Websocket-Accept: o99zKAbgLJAkj09CtFiz7MMFpVU=
+    Upgrade: websocket
+    Connection: upgrade
+
+
+    Server forward [tcp://123.151.152.153:32001] Connect Suss
+    Client [123.151.152.153:32001]-[172.16.16.12] Join [D212ts4C]
+    Agent ID [D212ts4C] Proxy Listen On [socks5://buut:buut@0.0.0.0:10086]
+```
 ## 交流 
 
 加V 
