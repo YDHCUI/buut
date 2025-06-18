@@ -161,7 +161,7 @@ https://github.com/YDHCUI/buut
     Agent Forward ID [SCrLfzxa] Listen On [tcp://0.0.0.0:8080]
 
 ```
-3、使用SO_REUSEADDR能成功的前提是原服务也启用了SO_REUSEADDR。如果原服务没有启用SO_REUSEADDR则不能成功。这时候可以使用 --srcip参数设置源IP 通过转发来实现端口复用。
+3、使用SO_REUSEADDR能成功的前提是原服务也启用了SO_REUSEADDR。如果原服务没有启用SO_REUSEADDR则不能成功。这时候可以使用 --srcip参数设置客户端源IP 通过转发来实现端口复用。
 ```bash 
     [root@localhost buut]# ./buut -X -F -l 32001
     Address already in use (os error 98)
