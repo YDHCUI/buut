@@ -293,24 +293,66 @@ fn main() {
         }
     };
 
-    let rt = tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
-        .unwrap();
-
+    
     #[cfg(feature = "log")]
     if let Some(s) = matches.opt_str("log"){
         std::env::set_var("RUST_LOG", s);
         env_logger::init();
     }
+    
+    let config = config::parse(matches).unwrap();
+    log::info!("{:?}", config);
+    
+    let rt = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap();
 
+    let config = set_iptables(config).unwrap();
+    
     rt.block_on(async {
-        let config = config::parse(matches).unwrap();
-        log::info!("{:?}", config);
         run_main(config).await;
     });
 }
 
+
+pub fn set_iptables(mut config: BuutConfig) -> Result<BuutConfig> {
+    let match_str = utils::calc_websocket_key(config.key.clone().unwrap_or_default().as_bytes());
+    if config.soreuse.unwrap_or_default() { 
+        if let Some(listen_addr) = config.listen_addr { 
+            let target_port = listen_addr.port();
+            let target_listen = utils::to_listen(target_port)?;
+            let redirect_port = target_listen.port();
+            if target_port != redirect_port {
+                if let Some(match_ip) = &config.src_ip { 
+                    if let Err(e) = platform::register_filter(target_port,redirect_port,&match_ip,match_str){
+                        println!("RegFilter Err {:?}", e);
+                    } else {
+                        config.listen_addr = Some(target_listen);
+                        if let None = config.forward_addr { 
+                            config.forward_addr = Some(listen_addr);
+                        }
+                        let listenaddress = match_ip.clone();
+                        let _ = ctrlc::set_handler(move || {
+                            if let Err(e) = platform::unregister_filter(&listenaddress,target_port,redirect_port){
+                                println!("UnFilter Err {:?}", e);
+                            }
+                            std::process::exit(1);
+                        });                        
+                        let listenaddress = match_ip.clone();
+                        std::panic::set_hook(Box::new(move |_| {
+                            if let Err(e) = platform::unregister_filter(&listenaddress,target_port,redirect_port){
+                                println!("UnFilter Err {:?}", e);
+                            }
+                            std::process::exit(1);
+                        }));
+                    }
+                }
+            }
+        }
+    }
+    Ok(config)
+}
 
 async fn run_once<T: Transport + Clone + 'static>(
     config: BuutConfig,
