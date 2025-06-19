@@ -20,9 +20,9 @@ https://github.com/YDHCUI/buut
     opts.optopt("l", "listen_addr",     "", "监听地址");
     opts.optopt("s", "remote_addr",     "", "远程地址");
     opts.optopt("f", "forward_addr",    "", "转发地址,只支持正向");
-    opts.optopt("p", "proxy_port",      "", "代理端口,默认10086 或得端口转发模式,本地端口:目标端口,如80:81");
+    opts.optopt("p", "proxy_port",      "", "代理端口,默认10086 或者端口映射模式,本地端口:目标端口,如80:81");
     opts.optopt("m", "transport",       "", "协议类型,默认TCP,支持<TCP|KCP>");
-    opts.optopt("c", "config",          "", "配置文件,默认路径./conf.toml");
+    opts.optopt("c", "config",          "", "配置文件");
     opts.optopt("n", "name",            "", "客户端id");
     opts.optopt("", "channel",          "", "通道数量,默认1");
     opts.optopt("", "headers",          "", "连接配置,连接服务所需的一些其它配置如cookie之类的");
@@ -34,6 +34,7 @@ https://github.com/YDHCUI/buut
     opts.optflagopt("X", "soreuse",     "", "是否端口复用");
     opts.optflagopt("O", "origins",     "", "是否流量加密");
     opts.optflagopt("Z", "compres",     "", "是否流量压缩"); 
+    opts.optflagopt("H", "hidecmd",     "", "是否隐藏窗口,仅windows");
 ```
 
 ## 特点：
@@ -136,18 +137,8 @@ https://github.com/YDHCUI/buut
 
 ```
 
-### Tips
 
-1、设置BUUT变量隐藏vps。 如： 原本的 ./buut -s vps:1234 可改成 export BUUT=vps:1234 && ./buut -s 1
-
-2、buut默认启用密码校验，默认用户名密码buut:buut 。
-
-3、如果需要修改sockspass则需要为每个agent端单独设置，如 ./buut -s 127.0.0.1:443 --sockspass 123456
-
-4、 使用带log的版本进行调试。 ./buut -l 1234 --log info 
-
-
-## 端口复用
+### 端口复用
 
 1、假设现在有一个web服务运行在8080端口，正常情况下直接监听8080是会报如下错误
     
@@ -161,7 +152,7 @@ https://github.com/YDHCUI/buut
     Agent Forward ID [SCrLfzxa] Listen On [tcp://0.0.0.0:8080]
 
 ```
-3、使用SO_REUSEADDR能成功的前提是原服务也启用了SO_REUSEADDR。如果原服务没有启用SO_REUSEADDR则不能成功。这时候可以使用 --srcip参数设置客户端源IP 通过转发来实现端口复用。
+3、使用SO_REUSEADDR能成功的前提是原服务也启用了SO_REUSEADDR。如果原服务没有启用SO_REUSEADDR则不能成功。这时候可以使用 --srcip参数设置源IP 通过转发来实现端口复用。
 ```bash 
     [root@localhost buut]# ./buut -X -F -l 32001
     Address already in use (os error 98)
@@ -194,9 +185,23 @@ https://github.com/YDHCUI/buut
     Client [123.151.152.153:32001]-[172.16.16.12] Join [D212ts4C]
     Agent ID [D212ts4C] Proxy Listen On [socks5://buut:buut@0.0.0.0:10086]
 ```
+
+### Tips
+
+1、设置BUUT变量隐藏vps。 如： 原本的 ./buut -s vps:1234 可改成 export BUUT=vps:1234 && ./buut -s 1
+
+2、buut默认启用密码校验，默认用户名密码buut:buut 。
+
+3、如果需要修改sockspass则需要为每个agent端单独设置，如 ./buut -s 127.0.0.1:443 --sockspass 123456
+
+4、 使用带log的版本进行调试。 ./buut -l 1234 --log info 
+
+5、 目前只支持对tcp做端口复用
+
+
 ## 交流 
 
-加V 
+加V拉你进群
 
 ![a8e5625b211ad3b3c435e9403ebae9f](https://github.com/YDHCUI/buut/assets/46884495/6c667bb1-7eae-464f-afbd-3f0d67cbcbcb)
 
